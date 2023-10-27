@@ -32,6 +32,7 @@ jobs:
         name: docker.tar.gz
         path: docker.tar.gz
         retention-days: 3
+  
   unit-test:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -44,6 +45,7 @@ jobs:
 
   db-test:
     runs-on: ubuntu-latest
+    depends-on: build
     timeout-minutes: 30
     strategy:
       fail-fast: false
