@@ -12,10 +12,12 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env: DOCKER_BUILDKIT=1
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@v4
     - name: Build Kine
-      run: DOCKER_BUILDKIT=1 make
+      run: make
     - name: Save and Cache Docker Images
       run: |
           echo "building images..."
@@ -25,12 +27,12 @@ jobs:
             ingress-controller/controller:1.0.0-dev \
             ingress-controller/controller-chroot:1.0.0-dev \
             | gzip > docker.tar.gz
-      - name: cache
-        uses: actions/upload-artifact@v3
-        with:
-          name: docker.tar.gz
-          path: docker.tar.gz
-          retention-days: 3
+    - name: cache
+      uses: actions/upload-artifact@v3
+      with:
+        name: docker.tar.gz
+        path: docker.tar.gz
+        retention-days: 3
   unit-test:
     runs-on: ubuntu-latest
     timeout-minutes: 10
