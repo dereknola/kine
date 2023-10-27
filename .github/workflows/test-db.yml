@@ -45,7 +45,7 @@ jobs:
 
   db-test:
     runs-on: ubuntu-latest
-    depends-on: build
+    needs: build
     timeout-minutes: 30
     strategy:
       fail-fast: false
