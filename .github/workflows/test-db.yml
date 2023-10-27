@@ -55,6 +55,6 @@ jobs:
       run: gzip -dc docker.tar.gz | docker load
     - name: Run ${{ matrix.db }} Tests
       run: |
-        . ./scripts/entry
+        ls -la ./scripts/*
         . ./scripts/test-helpers
         . ./scripts/test-run-${{ matrix.db }}
