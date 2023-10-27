@@ -100,7 +100,7 @@ export -f early-exit
 
 run-test() {
     export PROVISION_LOCK=$(mktemp)
-    ./scripts/test-runner $@ &
+    ./scripts/test-runner "$@" &
     pids+=($!)
     (
         set +x
@@ -133,7 +133,7 @@ export -f has-function
 
 run-function() {
     has-function $1 || return 0
-    $@
+    "$@"
 }
 export -f run-function
 
@@ -289,12 +289,12 @@ pid-cleanup() {
     local failCount=0
     set +e
     if [ $code -eq 0 ]; then
-        for pid in ${pids[@]}; do
+        for pid in "${pids[@]}"; do
             wait $pid || code=$?
         done
     fi
     if [ $code -ne 0 ]; then
-        for pid in ${pids[@]}; do
+        for pid in "${pids[@]}"; do
             pkill -P $pid
             wait $pid || failCount=$((failCount+1))
         done
