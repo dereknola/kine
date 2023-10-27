@@ -10,9 +10,40 @@ permissions:
   contents: read
   
 jobs:
-  test:
-    runs-on: ubuntu-20.04
-    timeout-minutes: 40
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build Kine
+      run: DOCKER_BUILDKIT=1 make
+    - name: Save and Cache Docker Images
+      run: |
+          echo "building images..."
+          echo "creating images cache..."
+          docker save \
+            kinenginx-ingress-controller:e2e \
+            ingress-controller/controller:1.0.0-dev \
+            ingress-controller/controller-chroot:1.0.0-dev \
+            | gzip > docker.tar.gz
+      - name: cache
+        uses: actions/upload-artifact@v3
+        with:
+          name: docker.tar.gz
+          path: docker.tar.gz
+          retention-days: 3
+  unit-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v4
+    - name: Go Tests
+      run: |
+        . ./scripts/test-helpers
+        go test -cover -tags=test ./...
+
+  db-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -20,13 +51,14 @@ jobs:
       max-parallel: 3
     steps:
     - uses: actions/checkout@v4
-    - name: Build Kine
-      run: DOCKER_BUILDKIT=1 make  
-    - name: Go Tests
-      run: |
-        . ./scripts/test-helpers
-        go test -cover -tags=test ./...
+    - name: cache
+      uses: actions/download-artifact@v3
+      with:
+        name: docker.tar.gz
+    - name: Load images from cache
+      run: gzip -dc docker.tar.gz | docker load
     - name: Run ${{ matrix.db }} Tests
       run: |
+        . ./scripts/entry
+        . ./scripts/test-helpers
         . ./scripts/test-run-${{ matrix.db }}
-        echo "Did test-run-${{ matrix.db }} $?"
