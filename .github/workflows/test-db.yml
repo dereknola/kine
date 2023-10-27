@@ -12,12 +12,11 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env: DOCKER_BUILDKIT=1
     steps:
     - name: Checkout
       uses: actions/checkout@v4
     - name: Build Kine
-      run: make
+      run: DOCKER_BUILDKIT=1 make
     - name: Save and Cache Docker Images
       run: |
           echo "building images..."
