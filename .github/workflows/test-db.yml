@@ -1,0 +1,32 @@
+name: Test Databases
+on:
+  push:
+    branches: [main, master]
+
+  pull_request:
+    branches: [main, master]
+
+permissions:
+  contents: read
+  
+jobs:
+  test:
+    runs-on: ubuntu-20.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        db: [sqlite, mysql, postgres, nats, nats-embedded, nats-socket]
+      max-parallel: 3
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build Kine
+      run: DOCKER_BUILDKIT=1 make  
+    - name: Go Tests
+      run: |
+        . ./scripts/test-helpers
+        go test -cover -tags=test ./...
+    - name: Run ${{ matrix.db }} Tests
+      run: |
+        . ./scripts/test-run-${{ matrix.db }}
+        echo "Did test-run-${{ matrix.db }} $?"
