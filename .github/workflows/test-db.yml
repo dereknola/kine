@@ -17,19 +17,12 @@ jobs:
       uses: actions/checkout@v4
     - name: Build Kine
       run: DOCKER_BUILDKIT=1 make
-    - name: Save and Cache Docker Images
-      run: |
-          echo "building images..."
-          echo "creating images cache..."
-          docker save \
-            kinenginx-ingress-controller:e2e \
-            ingress-controller/controller:1.0.0-dev \
-            ingress-controller/controller-chroot:1.0.0-dev \
-            | gzip > docker.tar.gz
-    - name: cache
+    - name: Save Docker Images
+      run: docker save rancher/kine | gzip > docker.tar.gz
+    - name: Upload Kine Image
       uses: actions/upload-artifact@v3
       with:
-        name: docker.tar.gz
+        name: docker.${{ github.sha }}.tar.gz
         path: docker.tar.gz
         retention-days: 3
   
@@ -54,10 +47,10 @@ jobs:
       max-parallel: 3
     steps:
     - uses: actions/checkout@v4
-    - name: cache
+    - name: Download Kine Image
       uses: actions/download-artifact@v3
       with:
-        name: docker.tar.gz
+        name: docker.${{ github.sha }}.tar.gz
     - name: Load images from cache
       run: gzip -dc docker.tar.gz | docker load
     - name: Run ${{ matrix.db }} Tests
