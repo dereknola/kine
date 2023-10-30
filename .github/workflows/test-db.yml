@@ -43,7 +43,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        db: [sqlite, mysql, postgres, nats, nats-embedded, nats-socket]
+        db: [sqlite, mysql, cockroachdb, postgres, nats, nats-embedded, nats-socket]
       max-parallel: 3
     steps:
     - uses: actions/checkout@v4
