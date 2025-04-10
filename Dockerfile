@@ -14,12 +14,13 @@ RUN if [ "${ARCH}" == "amd64" ]; then \
 ENV SRC_DIR=/go/src/github.com/k3s-io/kine
 WORKDIR ${SRC_DIR}/
 
-# Validate needs everything in the project, so we separate it out for better caching
+# Validate needs everything in the project, but no artifacts are produced
+# So we bind mount the source code into the container instead of copying it
 FROM infra AS validate
 ARG SKIP_VALIDATE
 ENV SKIP_VALIDATE=${SKIP_VALIDATE}
-COPY . .
-RUN --mount=type=cache,id=gomod,target=/go/pkg/mod \
+RUN --mount=type=bind,target=. \
+    --mount=type=cache,id=gomod,target=/go/pkg/mod \
     --mount=type=cache,id=gobuild,target=/root/.cache/go-build \
     --mount=type=cache,id=lint,target=/root/.cache/golangci-lint \
     ./scripts/validate
