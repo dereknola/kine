@@ -20,7 +20,36 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
+        id: bx
         uses: docker/setup-buildx-action@v3
+
+      - name: Go Cache for Docker
+        uses: actions/cache@v4
+        id: cache
+        with:
+          path: |
+            go-build-cache
+            go-mod-cache
+          key: ${{ runner.os }}-go-cache-rel-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-cache-rel
+
+      - name: Inject Go Cache into Buildx
+        uses: reproducible-containers/buildkit-cache-dance@v3
+        with:
+          builder: ${{ steps.bx.outputs.name }}
+          cache-map: |
+            {
+              "go-build-cache": {
+                "target": "/root/.cache/go-build",
+                "id": "gobuild"
+              },
+              "go-mod-cache": {
+                "target": "/go/pkg/mod",
+                "id": "gomod"
+              }
+            }
+          skip-extraction: ${{ steps.cache.outputs.cache-hit }}
 
       - name: Build binaries
         run: make multi-arch-build

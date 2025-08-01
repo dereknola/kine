@@ -77,6 +77,7 @@ COPY ./.git ./.git
 COPY ./.golangci.json ./.golangci.json
 
 RUN --mount=type=cache,id=gomod,target=/go/pkg/mod \
+    --mount=type=cache,id=gobuild,target=/root/.cache/go-build \
     ./scripts/buildx
 
 
