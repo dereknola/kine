@@ -17,36 +17,24 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        id: bx
         uses: docker/setup-buildx-action@v3
 
-      - name: Go Cache for Docker
+      - name: Cache Docker layers
         uses: actions/cache@v4
-        id: cache
         with:
-          path: |
-            go-build-cache
-            go-mod-cache
-          key: ${{ runner.os }}-go-cache-pr-${{ hashFiles('**/go.sum') }}
+          path: ${{ runner.temp }}/.buildx-cache
+          key: ${{ runner.os }}-buildx-pr-${{ hashFiles('**/go.sum') }}
           restore-keys: |
-            ${{ runner.os }}-go-cache-pr
-
-      - name: Inject Go Cache into Buildx
-        uses: reproducible-containers/buildkit-cache-dance@v3
-        with:
-          builder: ${{ steps.bx.outputs.name }}
-          cache-map: |
-            {
-              "go-build-cache": {
-                "target": "/root/.cache/go-build",
-                "id": "gobuild"
-              },
-              "go-mod-cache": {
-                "target": "/go/pkg/mod",
-                "id": "gomod"
-              }
-            }
-          skip-extraction: ${{ steps.cache.outputs.cache-hit }}
+            ${{ runner.os }}-buildx-pr
 
       - name: Build binaries
-        run: make multi-arch-build
+        run: |
+          make multi-arch-build \
+            CACHE_ARGS="--cache-from=type=local,src=${{ runner.temp }}/.buildx-cache --cache-to=type=local,dest=${{ runner.temp }}/.buildx-cache-new,compression=zstd,mode=max"
+
+      - name: Move cache
+        # https://github.com/docker/build-push-action/issues/252
+        # https://github.com/moby/buildkit/issues/1896
+        run: |
+          rm -rf ${{ runner.temp }}/.buildx-cache
+          mv ${{ runner.temp }}/.buildx-cache-new ${{ runner.temp }}/.buildx-cache

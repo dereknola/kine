@@ -28,6 +28,7 @@ PLATFORMS = linux/amd64,linux/arm64,linux/arm/v7,linux/riscv64
 multi-arch-build:
 	docker buildx build --build-arg="REPO=$(REPO)" --build-arg="TAG=$(TAG)" \
 		--build-arg="DIRTY=$(DIRTY)" --platform=$(PLATFORMS) \
+		$(CACHE_ARGS) \
 		--target=multi-arch-binary --output=type=local,dest=bin .
 	mv bin/linux*/kine* bin/
 	rmdir bin/linux*
